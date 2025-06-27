@@ -3,41 +3,49 @@ package com.oracle.aq.engine.operations;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.oracle.aq.engine.clients.AQAdapterClientBrm;
+
+import com.oracle.aq.engine.clients.AQAdapterClientOep;
+
 import jakarta.annotation.PreDestroy;
 
 @Service
-public class AQOperationsBrm {
+public class AQOperationsOep {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AQOperationsBrm.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AQOperationsOep.class);
 
-	@Value("${oracle.brm.aq.queue.dequeue.name}")
+	@Value("${oracle.oep.aq.queue.dequeue.name}")
 	private String queueName;
 
-	private final AQAdapterClientBrm aqAdapterClient;
+	private final AQAdapterClientOep aqAdapterClient;
 	private final ExecutorService executorservice;
 
-	public AQOperationsBrm(final AQAdapterClientBrm aqAdapterClient,
-			@Qualifier("taskPoolBrm") final ExecutorService executorService) {
+	public AQOperationsOep(final AQAdapterClientOep aqAdapterClient,
+			@Qualifier("taskPoolOep") final ExecutorService executorService) {
 		this.aqAdapterClient = aqAdapterClient;
 		this.executorservice = executorService;
 	}
 
 	public void getMessage() {
-		LOGGER.info("AQOperationsBrm.getMessage() invoked at := {}", new Date());
-		LOGGER.info("AQOperationsBrm.getMessage() queue name is := {}", queueName);
+		LOGGER.info("AQOperationsOep.getMessage() invoked at := {}", new Date());
+		LOGGER.info("AQOperationsOep.getMessage() queue name is := {}", queueName);
 		executorservice.execute(aqAdapterClient);
 	}
 
+	
+	public void stopAQListeners() {
+		LOGGER.info("AQOperationsOep Stopping Listeners");
+		aqAdapterClient.close();
+	}
+	
 	@PreDestroy
 	public void gracefulShutdown() {
-		LOGGER.info("AQOperationsOic Graceful shutdown initiated...");
-		
+		LOGGER.info("AQOperationsOep Graceful shutdown initiated...");
 		// Step 1: Stop polling first
 		stopAQListeners();
 		
@@ -50,15 +58,10 @@ public class AQOperationsBrm {
 	    } catch (Exception e) {
 	        LOGGER.error("Error while closing DB connections during shutdown", e);
 	    }
-	}	
-	
-	public void stopAQListeners() {
-		LOGGER.info("AQOperationsBrm Stopping Listeners");
-		aqAdapterClient.close();
 	}
 
 	private void stopExecService(final ExecutorService executorService) {
-		LOGGER.info("AQOperationsBrm stopping executor service...");
+		LOGGER.info("AQOperationsOep stopping executor service...");
 		try {
 			executorservice.shutdown();			
 		} catch (Exception ex) {
@@ -67,7 +70,7 @@ public class AQOperationsBrm {
 		//executorService.shutdown();
 		try {
 			if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
-				LOGGER.info("AQOperationsBrm Calling shutdownNow");
+				LOGGER.info("AQOperationsOep Calling shutdownNow");
 				executorService.shutdownNow();
 			}
 		} catch (InterruptedException ex) {
@@ -75,7 +78,7 @@ public class AQOperationsBrm {
 			// Preserve interrupt status
 			Thread.currentThread().interrupt();
 		}
-		LOGGER.info("AQOperationsBrm executor service stopped successfully...");
+		LOGGER.info("AQOperationsOep executor service stopped successfully...");
 	}
 
 }
