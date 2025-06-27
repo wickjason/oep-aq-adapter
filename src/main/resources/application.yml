@@ -1,0 +1,72 @@
+management:
+    endpoints:
+        web:
+            exposure:
+                include: "*"
+server:
+    port: 8080
+route: oic
+db:
+    connection:
+        retry-max-attempt: 10
+        multiplier: 2.3
+        max-delay: 30000
+spring:
+    hikari:
+        maximum-pool-size: 6
+        minimum-idle: 2
+        idle-timeout: 10000
+        connection-timeout: 1000
+        max-lifetime: 45000
+        auto-commit: false
+        pool-name: db-pool
+
+projectName: oep-aq-adapter
+
+logging:
+    file.name: "D:\\logs\\${projectName}.log"
+    logback:
+        rollingpolicy:
+            maxFileSize: 5KB
+            maxHistory: 30
+    level:
+        ROOT: INFO
+        "[com.zaxxer.hikari]": DEBUG
+oracle:
+    brm:
+        datasource:
+            driver-class-name: oracle.jdbc.OracleDriver
+            jdbc-url: jdbc:oracle:thin:@localhost:1521/ORCLDB2
+            username: ROGER
+            password: QWRtaW4xMjM=
+        aq:
+            queue:
+                owner: ROGER
+                dequeue:
+                    name: AQ_QUEUE
+                enqueue:
+                    name: MYDATA_QUEUE
+    oep:
+        datasource:
+            driver-class-name: oracle.jdbc.OracleDriver
+            jdbc-url: jdbc:oracle:thin:@localhost:1533/D1OEPPDB1.DATA01.ODBXRT01AMSDEV.ORACLEVCN.COM
+            username: PINOEP
+            password: TzFFMlBfY25fZmc=
+        aq:
+            queue:
+                owner: PINOEP
+                dequeue:
+                    name: MYDATA_QUEUE_REQUEST
+                enqueue:
+                    name: MYDATA_QUEUE_RESPONSE
+oep:
+    core:
+        url: http://order-entry-core:80/oep/ordermanagement/api/v1
+    accountmgmt:
+        url: http://oep-account-mgmt:80/oep/accountmanagement/api/v1/invprocessmydata
+
+dequeueOption:
+    brm:
+        setCondition: MyDataNotification
+    oic:
+        setCondition: MyDataNotificationResponse
